@@ -11,10 +11,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/devgru/node-tarantool-connector.git"
+    "url": "https://github.com/devgru/node-tarantool.git"
   },
   "dependencies": {
-    "tarantool-transport": "*"
+    "tarantool-composer": "*",
+    "tarantool-transport": "*",
+    "leb": "*"
   },
   "devDependencies": {
     "coffee-script": "*"
