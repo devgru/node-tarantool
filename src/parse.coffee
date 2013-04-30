@@ -9,6 +9,7 @@ module.exports = parse =
             size = body.readUInt32LE bytesRead
             bytesRead += 4
             tuple = body.slice bytesRead, bytesRead + size + 4
+            bytesRead += 4 + size
             tuples.push parse.tuple tuple
             count--
         
