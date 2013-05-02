@@ -2,8 +2,8 @@ leb = require 'leb'
 
 module.exports = parse =
     response: (body) ->
-        count = body.readUInt32LE 0
-        bytesRead = 4
+        count = body.readUInt32LE 4
+        bytesRead = 8
         tuples = []
         while count > 0
             size = body.readUInt32LE bytesRead

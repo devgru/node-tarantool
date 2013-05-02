@@ -1,6 +1,6 @@
 {
   "name": "tarantool",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A node.js connector for Tarantool",
   "files": ["lib"],
   "main": "./lib",
@@ -14,7 +14,6 @@
     "url": "https://github.com/devgru/node-tarantool.git"
   },
   "dependencies": {
-    "tarantool-composer": "*",
     "tarantool-transport": "*",
     "leb": "*"
   },
