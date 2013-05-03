@@ -5,11 +5,12 @@ module.exports = compose =
         buffer = new Buffer arguments.length * 4
         for value, key in arguments
             buffer.writeUInt32LE value, key * 4
+        
         return buffer
     
     field: (value) ->
-        # only positive integer or string
-        if typeof value is 'number' && value % 1 is 0 && value >= 0
+        # only non-negative integer or string
+        if typeof value is 'number' and value % 1 is 0 and value >= 0
             # 64 bit?
             if value > 4294967296
                 field = new Buffer 9
@@ -22,20 +23,20 @@ module.exports = compose =
         else if typeof value is 'string'
             # what about string encoding?
             stringBuffer = new Buffer value, 'utf-8' # default
-            stringBufferLength = leb.encodeUInt32 stringBuffer.length
-            field = Buffer.concat [stringBufferLength, stringBuffer]
+            lengthBuffer = leb.encodeUInt32 stringBuffer.length
+            field = Buffer.concat [lengthBuffer, stringBuffer]
+        else if Buffer.isBuffer value
+            # we can call it 'binary string' in node
+            lengthBuffer = leb.encodeUInt32 value.length
+            field = Buffer.concat [bufferLength, value]
         else
             throw new Error 'bad argument for tarantool field: ' + value
 
         return field
     
-    tuple: (tupleAsArray) ->
-        cardinality = tupleAsArray.length
-        cardinalityBuffer = new Buffer 4
-        cardinalityBuffer.writeUInt32LE cardinality, 0
-        
-        fields = tupleAsArray.map compose.field
-        fields.unshift cardinalityBuffer # prepending field count
+    tuple: (tuple) ->
+        fields = tuple.map compose.field
+        fields.unshift compose.int32s tuple.length
         
         return Buffer.concat fields
     
@@ -54,5 +55,6 @@ module.exports = compose =
         length = compose.field argument.length
         string = compose.field argument.string
         size = leb.encodeUInt32 offset.length + length.length + string.length
+        
         return Buffer.concat [size, offset, length, string]
 
