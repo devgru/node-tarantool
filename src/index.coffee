@@ -37,8 +37,7 @@ class Tarantool
         if returnCode > 0
             callback returnCode, header, body.toString 'utf-8', 4
         else
-            tuples = parse.response body
-            callback returnCode, header, tuples
+            callback returnCode, header, parse.response body
         return
     
     insert: (space, flags, tuple, callback) ->
