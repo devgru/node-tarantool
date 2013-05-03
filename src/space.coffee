@@ -5,7 +5,7 @@ class Space
         @connector.insert @space, flags, tuple, callback
     
     select: (index, offset, limit, count, tuples, callback) ->
-        @connector.select @space, offset, limit, count, tuples, callback
+        @connector.select @space, index, offset, limit, count, tuples, callback
     
     update: (flags, tuple, operations, callback) ->
         @connector.update @space, flags, tuple, operations, callback
