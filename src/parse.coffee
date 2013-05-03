@@ -5,27 +5,27 @@ module.exports = parse =
         count = body.readUInt32LE 4
         bytesRead = 8
         tuples = []
+        
         while count > 0
             size = body.readUInt32LE bytesRead
             bytesRead += 4
-            tuple = body.slice bytesRead, bytesRead + size + 4
-            bytesRead += 4 + size
+            tuple = body.slice bytesRead, bytesRead += size + 4
+            # can you see the hack? here it is      ^^
             tuples.push parse.tuple tuple
             count--
         
         return tuples
     
     tuple: (tuple) ->
-        cardinality = tuple.readUInt32LE 0
-        count = cardinality
-        tuple = tuple.slice 4, tuple.length
+        count = tuple.readUInt32LE 0 # cardinality
+        bytesRead = 4
         fields = []
+        
         while count > 0
-            sizeLeb = leb.decodeUInt32 tuple
+            sizeLeb = leb.decodeUInt32 tuple, bytesRead
             bytesRead = sizeLeb.nextIndex
             size = sizeLeb.value
-            fields.push tuple.slice bytesRead, bytesRead + size
-            tuple = tuple.slice bytesRead + size, tuple.length
+            fields.push tuple.slice bytesRead, bytesRead += size
             count--
         
         return fields
