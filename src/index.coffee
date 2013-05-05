@@ -32,12 +32,12 @@ class Tarantool
         new Space this, space
     
     
-    parseBody: (callback) -> (header, body) ->
+    parseBody: (callback) -> (body) ->
         returnCode = body.readUInt32LE 0
         if returnCode > 0
-            callback returnCode, header, body.toString 'utf-8', 4
+            callback returnCode, body.toString 'utf-8', 4
         else
-            callback returnCode, header, parse.response body
+            callback returnCode, parse.response body
         return
     
     insert: (space, flags, tuple, callback) ->
