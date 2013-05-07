@@ -36,11 +36,11 @@ Creates Connector using Transport, which can be any object, with `request(type, 
 
 Creates Connector and incapsulated Transport.
 
-### connector.insert (space, flags, tuple, callback) ->
-### connector.select (space, index, offset, limit, count, tuples, callback) ->
-### connector.update (space, flags, tuple, operations, callback) ->
-### connector.delete (space, flags, tuple, callback) ->
-### connector.call (flags, proc, tuple, callback) ->
+### connector.insert (space, [flags,] tuple, callback) ->
+### connector.select (space, index, [offset, [limit,]] tuples, callback) ->
+### connector.update (space, [flags,] tuple, operations, callback) ->
+### connector.delete (space, [flags,] tuple, callback) ->
+### connector.call ([flags], proc, tuple, callback) ->
 ### connector.ping (callback) ->
 
 - `space`, `flags`, `offset`, `limit`, `count` are Integers
