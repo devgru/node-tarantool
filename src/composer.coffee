@@ -37,8 +37,8 @@ class Composer
         
         @request REQUEST_TYPE.insert, request, callback
     
-    select: (space, index, offset, limit, count, tuples, callback) ->
-        options = compose.int32s space, index, offset, limit, count
+    select: (space, index, offset, limit, tuples, callback) ->
+        options = compose.int32s space, index, offset, limit, tuples.length
         buffers = tuples.map compose.tuple
         buffers.unshift options
         request = Buffer.concat buffers

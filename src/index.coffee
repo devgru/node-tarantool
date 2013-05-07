@@ -4,6 +4,9 @@ Space = require './space'
 
 parse = require './parse'
 
+DEFAULT_OFFSET = 0
+DEFAULT_LIMIT = 4294967295
+
 class Tarantool
     @flags =
         none       : 0
@@ -41,15 +44,41 @@ class Tarantool
         return
     
     insert: (space, flags, tuple, callback) ->
+        if callback is undefined
+            callback = tuple
+            tuple = flags
+            flags = 0
+        
         @composer.insert space, flags, tuple, @parseBody callback
     
-    select: (space, index, offset, limit, count, tuples, callback) ->
-        @composer.select space, index, offset, limit, count, tuples, @parseBody callback
+    select: (space, index, offset, limit, tuples, callback) ->
+        if tuples is undefined
+            tuples = offset
+            callback = limit
+            offset = DEFAULT_OFFSET
+            limit = DEFAULT_LIMIT
+        else if callback is undefined
+            callback = tuples
+            tuples = limit
+            limit = DEFAULT_LIMIT
+        
+        @composer.select space, index, offset, limit, tuples, @parseBody callback
     
     update: (space, flags, tuple, operations, callback) ->
+        if callback is undefined
+            callback = operations
+            operations = tuple
+            tuple = flags
+            flags = 0
+        
         @composer.update space, flags, tuple, operations, @parseBody callback
     
     delete: (space, flags, tuple, callback) ->
+        if callback is undefined
+            callback = tuple
+            tuple = flags
+            flags = 0
+        
         @composer.delete space, flags, tuple, @parseBody callback
     
     call: (flags, proc, tuple, callback) ->
