@@ -1,6 +1,6 @@
 {
   "name": "tarantool",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A node.js connector for Tarantool",
   "files": ["lib"],
   "main": "./lib",
