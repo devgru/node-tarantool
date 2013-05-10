@@ -18,7 +18,7 @@ There are no Tables and Rows in Tarantool, there are Spaces and Tuples instead, 
 
 Raw Connector methods deal with Tuples, each is Array of Buffers. You should use Space methods and `spec` object (see below) instead to get nicer interface, which will map field order and types to object fields for you.
 
-Tarantool stores data in fields, field type is either int32, int64 or octet string. Integers are unsigned.
+Tarantool stores data in fields, field type is either int32, int64 or octet string. **All integers in options or fields are unsigned.**
 
 64-bit integers are not implemented yet, they can not be stored in V8 natively without lost of significance. Maybe I will implement it with bignum by fullmoon or javascript-bignum.
 
@@ -68,7 +68,7 @@ tc.ping callback
 tuple = tc.transform object, spec [, transformers]
 ```
 
-- `space`, `flags`, `offset` and `limit` are Integers, 0 to 2³² - 1
+- `space`, `flags`, `offset` and `limit` are Integers
 - `space` is Space number
 - `flags` is optinal field, [possible values](https://github.com/mailru/tarantool/blob/master/doc/box-protocol.txt#L231) are stored in `Tarantool.flags` in camelCase, e.g. Tarantool.flags.returnTuple
 - `offset` and `limit` are optional, use them to specify ammount of returned with select
