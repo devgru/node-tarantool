@@ -83,6 +83,7 @@ space.splice spliceArgument
 ```
 
 `spliceArgument` is a Hash (Object) with three keys: `string` (String), `offset` (Number) and `length` (Number)
+
 `argument` is a Hash (Object) with single key, e.g.:
 
 ```coffee
