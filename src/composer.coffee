@@ -33,8 +33,11 @@ class Composer
         tuple = compose.tuple tuple
         count = compose.int32s operations.length
         operations = operations.map compose.operation
-        
-        request = Buffer.concat [options, tuple, count, operations]
+        operations.unshift count
+        operations.unshift tuple
+        operations.unshift options
+
+        request = Buffer.concat operations
         
         @request REQUEST_TYPE.update, request, callback
     

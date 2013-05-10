@@ -5,50 +5,51 @@ Connector implements tarantool methods: `insert`, `select`, `update`, `delete`, 
 Connector uses [Transport](https://github.com/devgru/node-tarantool-transport) to compose and parse request and response headers.
 Connector composes all arguments into binary Tarantool request.
 
-NPM
----
+## NPM
 
 ```shell
 npm install tarantool
 ```
 
-How to use
-----------
-
+## How to use
 
 ```coffee
-tarantool = require 'tarantool'
+Tarantool = require 'tarantool'
 
-tc = tarantool.connect 33013, 'localhost', ->
+tc = Tarantool.connect 33013, 'localhost', ->
     tc.ping ->
         console.log 'hello, hairy spider'
 ```
 
-Check current src/test.coffee for examples of usage.
+Check current test/*.coffee for examples of usage.
 
-API
----
+## API
 
-### new Connector (Transport) -> Connector
+### Creating Connector
 
-Creates Connector using Transport, which can be any object, with `request(type, body, callback)` method.
+`tc` stands for Tarantool Connection
 
-### Connector.connect (port, host, callback) -> Connector
+```coffee
+# create Connection using Transport, any object, with `request(type, body, callback)`
+tc = new Tarantool (transport)
+# OR use create default Transport
+tc = Tarantool.connect (port, host, callback)
 
-Creates Connector and incapsulated Transport.
+# now we can use connection
 
-### connector.insert (space, tuple, [flags,] callback) ->
-### connector.select (space, tuples, [index, [offset, [limit,]]] callback) ->
-### connector.update (space, tuple, [operations, [flags,]] callback) ->
-### connector.delete (space, tuple, [flags,] callback) ->
-### connector.call (proc, tuple, [flags,] callback) ->
-### connector.call (proc, object, spec, [transformers, [flags,]] callback) ->
-### connector.ping (callback) ->
+tc.insert (space, tuple, [flags,] callback)
+tc.select (space, tuples, [index, [offset, [limit,]]] callback)
+tc.update (space, tuple, [operations, [flags,]] callback)
+tc.delete (space, tuple, [flags,] callback)
+tc.call (proc, tuple, [flags,] callback)
+tc.call (proc, object, spec, [transformers, [flags,]] callback)
+tc.ping (callback)
+```
 
 - `space`, `flags`, `offset`, `limit`, `count` are Integers
 - `tuple` is an Array of Field Values — Strings, Buffers or Integers
 - `proc` is a String
-- `operations` is an Array of `operation`, each `operation` is either `{ operation: `[`OperationType`](https://github.com/mailru/tarantool/blob/master/doc/box-protocol.txt#L273)`, argument: FieldValue}` or `{ operation: 5, argument: { length: FieldValue, offset: FieldValue, string: FieldValue} }`
+- `operations` are constructed via space methods (see below)
 - `callback` is a Function that is called as `callback (returnCode, body)` where `body` is array of `tuples` or an error string if `returnCode` is non-zero.
 - `transformers` is Hash (Object), each element is Object with `pack` and `unpack` methods. If you are using default types (see below) you don't have to specify custom transformers.
 - `spec` is object, its keys are field names, values are types:
@@ -57,36 +58,60 @@ usersSpec = id: 'int32', name: 'string', meta: 'object'
 users = tc.space 0, usersSpec
 ```
 
-Space
------
+Specs are important for `update` and `call`, they specify tuple to array binding.
 
-### connector.space (space, spec[, transformers]) -> Space
+### Space
 
-Returns Space object, which deals with objects, incapsulating tuples.
+```coffee
+# creating Space with known spec, and, maybe additional transformations
+tc.space (space, spec[, transformers]) -> Space
 
-### space.insert (object, [flags,] callback) ->
-### space.select (objects, [index, [offset, [limit,]]], callback) ->
-### space.update (object, [operations, [flags,]] callback) ->
-### space.delete (object, [flags,] callback) ->
+space.insert (object, [flags,] callback)
+space.select (objects, [index, [offset, [limit,]]], callback)
+space.update (object, [operations, [flags,]] callback)
+space.delete (object, [flags,] callback)
 
-Types
------
+# if we need to create operations list:
+space.assign argument
+space.add argument
+space.and argument
+space.xor argument
+space.or argument
+space.delete argument
+space.insertBefore argument
+space.splice spliceArgument
+```
 
-there are following types of field:
+`spliceArgument` is a Hash (Object) with three keys: `string` (String), `offset` (Number) and `length` (Number)
+`argument` is a Hash (Object) with single key, e.g.:
+
+```coffee
+spec = id: 'i32', name: 'string', winner: 'i32'
+userSpace = tc.space 2, spec
+operations = [
+    userSpace.or winner: 1
+    userSpace.splice name: offset: 0, length: 0, string: '[Winner] '
+]
+userSpace.update { id: userId }, operations, ->
+    console.log 'winner updated'
+```
+
+### Types
+
+there are following field types:
 - int32 - unsigned 32-bit integer
 - string - utf-8 encoded string
 - buffer - passed as is
-- object - transformed to string by `JSON.stringify`/`JSON.parse`
+- object - mapped to string via `JSON.stringify`/`JSON.parse`
 - int64 - **not implemented yet**
 
-TODO
-----
+*int32, i32, or just 32 can be used to specify int32 type, same for 64*
+
+### TODO
 - check if Buffer.concat is fast enough, if it is slow - replace with array of buffers, concat only before transport.request
 - more tests
-- splice operations implementation
 - research int64 transformer implementation
 
-LICENSE
--------
+### LICENSE
 
 Tarantool Connector for node.js is published under MIT license.

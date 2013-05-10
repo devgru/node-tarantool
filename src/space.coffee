@@ -64,7 +64,6 @@ class Space
             flags = DEFAULT_FLAGS
 
         tuple = @mapping.packObject object
-        operations =
         @connector.update @space, tuple, operations, flags, @unpackTuples callback
     
     delete: (object, flags, callback) ->
