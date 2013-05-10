@@ -1,6 +1,7 @@
 Transport = require 'tarantool-transport'
 Composer = require './composer'
 Space = require './space'
+Mapping = require './mapping'
 
 parse = require './parse'
 
@@ -36,8 +37,10 @@ class Tarantool
     
     space: (space, spec) ->
         new Space this, space, spec
-    
-    
+
+    transform: (object, spec, transformers) ->
+        new Mapping(spec, transformers).packObject object
+
     parseBody: (callback) -> (body) ->
         returnCode = body.readUInt32LE 0
         if returnCode > 0

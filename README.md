@@ -42,16 +42,17 @@ tc.select (space, tuples, [index, [offset, [limit,]]] callback)
 tc.update (space, tuple, [operations, [flags,]] callback)
 tc.delete (space, tuple, [flags,] callback)
 tc.call (proc, tuple, [flags,] callback)
-tc.call (proc, object, spec, [transformers, [flags,]] callback)
 tc.ping (callback)
 ```
 
 - `space`, `flags`, `offset`, `limit`, `count` are Integers
-- `tuple` is an Array of Field Values — Strings, Buffers or Integers
+- `tuples` is an Array of tuples
+- `tuple` is an Array of Fields, each Field is Buffer
 - `proc` is a String
 - `operations` are constructed via space methods (see below)
 - `callback` is a Function that is called as `callback (returnCode, body)` where `body` is array of `tuples` or an error string if `returnCode` is non-zero.
-- `transformers` is Hash (Object), each element is Object with `pack` and `unpack` methods. If you are using default types (see below) you don't have to specify custom transformers.
+- `transformers` is Hash (Object), each element is Transformer, name is type name
+- `transformer` is an Object with `pack` and `unpack` methods.
 - `spec` is object, its keys are field names, values are types:
 ```coffee
 usersSpec = id: 'int32', name: 'string', meta: 'object'
@@ -59,6 +60,13 @@ users = tc.space 0, usersSpec
 ```
 
 Specs are important for `update` and `call`, they specify tuple to array binding.
+
+You can transform single object into tuple like this:
+```coffee
+tc.transform (object, spec [, transformers]
+```
+
+It's recommended to use Space, it will transform objects for you.
 
 ### Space
 
@@ -105,6 +113,8 @@ there are following field types:
 - buffer - passed as is
 - object - mapped to string via `JSON.stringify`/`JSON.parse`
 - int64 - **not implemented yet**
+
+If you want to use any other type or override default you should implement your own Transformer (see above).
 
 *int32, i32, or just 32 can be used to specify int32 type, same for 64*
 

@@ -41,6 +41,7 @@ class Mapping
         return if not transformers?
         for key, transformer of transformers
             @transformers[key] = transformer
+        return
 
     packObjects: (objects) ->
         objects.map @packObject.bind @
