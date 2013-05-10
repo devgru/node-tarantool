@@ -1,9 +1,8 @@
-Beta version of [Tarantool](http://tarantool.org) connector for [node.js](http://nodejs.org)
+Beta version of [Tarantool](http://tarantool.org) connector for [node.js](http://nodejs.org).
 
-Connector implements tarantool methods: `insert`, `select`, `update`, `delete`, `call` and `ping`.
+Connector implements [Tarantool binary protocol](https://github.com/mailru/tarantool/blob/master/doc/box-protocol.txt) and allows you to use nice interface to access Tarantool.
 
 Connector uses [Transport](https://github.com/devgru/node-tarantool-transport) to compose and parse request and response headers.
-Connector composes all arguments into binary Tarantool request.
 
 ## NPM
 
@@ -11,41 +10,68 @@ Connector composes all arguments into binary Tarantool request.
 npm install tarantool
 ```
 
-## How to use
+## Notes on Tarantool Connector
 
+Connector tries to be useful hiding most of Tarantool protocol related stuff under the hood.
+
+There are no Tables and Rows in Tarantool, there are Spaces and Tuples instead, with numbers instead of names.
+
+Raw Connector methods deal with Tuples, each is Array of Buffers. You should use Space methods and `spec` object (see below) instead to get nicer interface, which will map field order and types to object fields for you.
+
+Tarantool stores data in fields, field type is either int32, int64 or octet string. Integers are unsigned.
+
+64-bit integers are not implemented yet, they can not be stored in V8 natively without lost of significance. Maybe I will implement it with bignum by fullmoon or javascript-bignum.
+
+We can use octet string to store Strings, Buffers and Objects (as JSON).
+
+## Object to Tuple binding specification — `spec`
+
+There are following field types you can use as `spec` values:
+- int32 - unsigned 32-bit integer
+- string - utf-8 encoded string
+- buffer - passed as is
+- object - mapped to string via `JSON.stringify`/`JSON.parse`
+- int64 - **not implemented yet**
+
+Example of valid `spec`:
 ```coffee
-Tarantool = require 'tarantool'
-
-tc = Tarantool.connect 33013, 'localhost', ->
-    tc.ping ->
-        console.log 'hello, hairy spider'
+spec = id: 'int32', name: 'string'
 ```
 
-Check current test/*.coffee for examples of usage.
+Here we specify three field-related things: order, name and type. Order-Name two-way binding allows to map fields, and Name-Type binding allows to transform values to Buffer and back.
+
+If you want to use any other type or override default you should implement your own Transformer (see below).
+
+*int32, i32, or just 32 can be used to specify int32 type, same for 64*
 
 ## API
 
-### Creating Connector
+### Connection
 
 `tc` stands for Tarantool Connection
 
 ```coffee
 # create Connection using Transport, any object, with `request(type, body, callback)`
-tc = new Tarantool (transport)
+tc = new Tarantool transport
 # OR use create default Transport
-tc = Tarantool.connect (port, host, callback)
+tc = Tarantool.connect port, host, callback
 
 # now we can use connection
+tc.insert space, tuple, [flags,] callback
+tc.select space, tuples, [index, [offset, [limit,]]] callback
+tc.update space, tuple, [operations, [flags,]] callback
+tc.delete space, tuple, [flags,] callback
+tc.call proc, tuple, [flags,] callback
+tc.ping callback
 
-tc.insert (space, tuple, [flags,] callback)
-tc.select (space, tuples, [index, [offset, [limit,]]] callback)
-tc.update (space, tuple, [operations, [flags,]] callback)
-tc.delete (space, tuple, [flags,] callback)
-tc.call (proc, tuple, [flags,] callback)
-tc.ping (callback)
+# please, don't generate tuples yourself, use transform:
+tuple = tc.transform object, spec [, transformers]
 ```
 
-- `space`, `flags`, `offset`, `limit`, `count` are Integers
+- `space`, `flags`, `offset` and `limit` are Integers
+- `space` is Space number, 0 to 2^³² - 1
+- `flags` is optinal field, [possible values](https://github.com/mailru/tarantool/blob/master/doc/box-protocol.txt#L231) are stored in `Tarantool.flags` in camelCase, e.g. Tarantool.flags.returnTuple
+- `offset` and `limit` are optional, use them to specify ammount of returned with select
 - `tuples` is an Array of tuples
 - `tuple` is an Array of Fields, each Field is Buffer
 - `proc` is a String
@@ -53,18 +79,7 @@ tc.ping (callback)
 - `callback` is a Function that is called as `callback (returnCode, body)` where `body` is array of `tuples` or an error string if `returnCode` is non-zero.
 - `transformers` is Hash (Object), each element is Transformer, name is type name
 - `transformer` is an Object with `pack` and `unpack` methods.
-- `spec` is object, its keys are field names, values are types:
-```coffee
-usersSpec = id: 'int32', name: 'string', meta: 'object'
-users = tc.space 0, usersSpec
-```
-
-Specs are important for `update` and `call`, they specify tuple to array binding.
-
-You can transform single object into tuple like this:
-```coffee
-tc.transform (object, spec [, transformers]
-```
+- `spec` is object, its keys are field names, values are types, and order is order of fields in tuple
 
 It's recommended to use Space, it will transform objects for you.
 
@@ -72,12 +87,12 @@ It's recommended to use Space, it will transform objects for you.
 
 ```coffee
 # creating Space with known spec, and, maybe additional transformations
-tc.space (space, spec[, transformers]) -> Space
+space = tc.space space, spec[, transformers]
 
-space.insert (object, [flags,] callback)
-space.select (objects, [index, [offset, [limit,]]], callback)
-space.update (object, [operations, [flags,]] callback)
-space.delete (object, [flags,] callback)
+space.insert object, [flags,] callback
+space.select objects, [index, [offset, [limit,]]], callback
+space.update object, [operations, [flags,]] callback
+space.delete object, [flags,] callback
 
 # if we need to create operations list:
 space.assign argument
@@ -105,24 +120,13 @@ userSpace.update { id: userId }, operations, ->
     console.log 'winner updated'
 ```
 
-### Types
-
-there are following field types:
-- int32 - unsigned 32-bit integer
-- string - utf-8 encoded string
-- buffer - passed as is
-- object - mapped to string via `JSON.stringify`/`JSON.parse`
-- int64 - **not implemented yet**
-
-If you want to use any other type or override default you should implement your own Transformer (see above).
-
-*int32, i32, or just 32 can be used to specify int32 type, same for 64*
-
 ### TODO
 - check if Buffer.concat is fast enough, if it is slow - replace with array of buffers, concat only before transport.request
 - more tests
 - research int64 transformer implementation
 
-### LICENSE
+### Bugs and issues
+Bug reports are welcome :)
 
+### LICENSE
 Tarantool Connector for node.js is published under MIT license.
