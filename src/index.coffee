@@ -5,6 +5,9 @@ Space = require './space'
 parse = require './parse'
 
 DEFAULT_OFFSET = 0
+DEFAULT_OPERATIONS = []
+DEFAULT_FLAGS = 0
+DEFAULT_INDEX = 0
 DEFAULT_LIMIT = 4294967295
 
 class Tarantool
@@ -13,7 +16,7 @@ class Tarantool
         returnTuple: 1
         add        : 2
         replace    : 4
-    
+
     @updateOperations =
         assign      : 0
         add         : 1
@@ -31,63 +34,67 @@ class Tarantool
     constructor: (@transport) ->
         @composer = new Composer @transport
     
-    space: (space) ->
-        new Space this, space
+    space: (space, spec) ->
+        new Space this, space, spec
     
     
     parseBody: (callback) -> (body) ->
         returnCode = body.readUInt32LE 0
         if returnCode > 0
-            callback returnCode, body.toString 'utf-8', 4
+            callback returnCode, body.toString 'utf-8', 4, body.length - 1
         else
             callback returnCode, parse.response body
         return
     
-    insert: (space, flags, tuple, callback) ->
+    insert: (space, tuple, flags, callback) ->
         if callback is undefined
-            callback = tuple
-            tuple = flags
-            flags = 0
-        
-        @composer.insert space, flags, tuple, @parseBody callback
+            callback = flags
+            flags = DEFAULT_FLAGS
+
+        @composer.insert space, tuple, flags, @parseBody callback
     
-    select: (space, index, offset, limit, tuples, callback) ->
-        if tuples is undefined
-            tuples = offset
-            callback = limit
+    select: (space, tuples, index, offset, limit, callback) ->
+        if offset is undefined
+            callback = index
+            limit = DEFAULT_LIMIT
             offset = DEFAULT_OFFSET
+            index = DEFAULT_INDEX
+        else if limit is undefined
+            callback = offset
             limit = DEFAULT_LIMIT
+            offset = DEFAULT_OFFSET
         else if callback is undefined
-            callback = tuples
-            tuples = limit
+            callback = limit
             limit = DEFAULT_LIMIT
-        
-        @composer.select space, index, offset, limit, tuples, @parseBody callback
+
+        @composer.select space, tuples, index, offset, limit, @parseBody callback
     
-    update: (space, flags, tuple, operations, callback) ->
-        if callback is undefined
+    update: (space, tuple, operations, flags, callback) ->
+        if flags is undefined
             callback = operations
-            operations = tuple
-            tuple = flags
-            flags = 0
-        
-        @composer.update space, flags, tuple, operations, @parseBody callback
+            operations = DEFAULT_OPERATIONS
+            flags = DEFAULT_FLAGS
+        else if callback is undefined
+            callback = flags
+            flags = DEFAULT_FLAGS
+
+        @composer.update space, tuple, operations, flags, @parseBody callback
     
-    delete: (space, flags, tuple, callback) ->
+    delete: (space, tuple, flags, callback) ->
         if callback is undefined
-            callback = tuple
-            tuple = flags
-            flags = 0
-        
-        @composer.delete space, flags, tuple, @parseBody callback
+            callback = flags
+            flags = DEFAULT_FLAGS
+
+        @composer.delete space, tuple, flags, @parseBody callback
     
-    call: (flags, proc, tuple, callback) ->
-        @composer.call flags, proc, tuple, @parseBody callback
+    call: (proc, tuple, flags, callback) ->
+        if callback is undefined
+            callback = flags
+            flags = 0
+
+        @composer.call proc, tuple, flags, @parseBody callback
     
     ping: (callback) ->
         @composer.ping callback
-    
-    end: () ->
-        @transport.end()
     
 module.exports = Tarantool

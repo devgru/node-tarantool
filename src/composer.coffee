@@ -11,33 +11,16 @@ REQUEST_TYPE =
     ping  : 65280
     
 class Composer
-    @flags =
-        none       : 0
-        returnTuple: 1
-        add        : 2
-        replace    : 4
-    
-    @updateOperations =
-        assign      : 0
-        add         : 1
-        bitwiseAnd  : 2
-        bitwiseXor  : 3
-        bitwiseOr   : 4
-        splice      : 5
-        delete      : 6
-        insertBefore: 7
-    
-    
     constructor: (@transport) ->
     
-    insert: (space, flags, tuple, callback) ->
+    insert: (space, tuple, flags, callback) ->
         options = compose.int32s space, flags
         
         request = Buffer.concat [options, compose.tuple tuple]
-        
+
         @request REQUEST_TYPE.insert, request, callback
     
-    select: (space, index, offset, limit, tuples, callback) ->
+    select: (space, tuples, index, offset, limit, callback) ->
         options = compose.int32s space, index, offset, limit, tuples.length
         buffers = tuples.map compose.tuple
         buffers.unshift options
@@ -45,7 +28,7 @@ class Composer
         
         @request REQUEST_TYPE.select, request, callback
     
-    update: (space, flags, tuple, operations, callback) ->
+    update: (space, tuple, operations, flags, callback) ->
         options = compose.int32s space, flags
         tuple = compose.tuple tuple
         count = compose.int32s operations.length
@@ -55,16 +38,16 @@ class Composer
         
         @request REQUEST_TYPE.update, request, callback
     
-    delete: (space, flags, tuple, callback) ->
+    delete: (space, tuple, flags, callback) ->
         options = compose.int32s space, flags
         request = Buffer.concat [options, compose.tuple tuple]
         
         @request REQUEST_TYPE.delete, request, callback
     
-    call: (flags, proc, tuple, callback) ->
+    call: (proc, args, flags, callback) ->
         flags = compose.int32s flags
-        proc = compose.field proc
-        tuple = compose.tuple tuple
+        proc = compose.stringField proc
+        tuple = compose.tuple args
         request = Buffer.concat [flags, proc, tuple]
 
         @request REQUEST_TYPE.call, request, callback

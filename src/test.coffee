@@ -8,9 +8,9 @@ TarantoolTransport = require 'tarantool-transport'
 tt = Tarantool.connect 33013, 'localhost', ->
     # maybe the fact of connection marks that tarantool is up, but let's check with ping
     tt.ping ->
-        space = tt.space 0
-        space.select 0, [[5],[4]], ->
-            console.log arguments
-        space.insert Tarantool.flags.returnTuple, [Math.floor 4294967295 * Math.random()], (returnCode) ->
-            console.log arguments
-        tt.end()
+        space = tt.space 0, first: 'i32', second: 'i32', third: 'object'
+        #space.select [first: 5], ->  console.log arguments
+        rnd = -> Math.floor 255 * Math.random()
+        space.insert first: rnd()*rnd()+rnd(), Tarantool.flags.returnTuple, (returnCode) -> console.log arguments
+        space.select [{first: 0}], (code, objects) ->
+            console.log 'hello'

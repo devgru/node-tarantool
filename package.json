@@ -1,8 +1,10 @@
 {
   "name": "tarantool",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "A node.js connector for Tarantool",
-  "files": ["lib"],
+  "files": [
+    "lib"
+  ],
   "main": "./lib",
   "scripts": {
     "build": "coffee --bare --compile --lint --output lib src/*.coffee",
@@ -14,13 +16,14 @@
     "url": "https://github.com/devgru/node-tarantool.git"
   },
   "dependencies": {
-    "tarantool-transport": "0.1.x",
+    "tarantool-transport": "0.2.x",
     "leb": "*"
   },
   "devDependencies": {
-    "coffee-script": "*"
+    "coffee-script": "*",
+    "grunt": "*",
+    "grunt-contrib-nodeunit": "~0.1.2"
   },
-
   "keywords": [
     "tarantool"
   ],
