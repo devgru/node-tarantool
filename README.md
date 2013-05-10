@@ -68,8 +68,8 @@ tc.ping callback
 tuple = tc.transform object, spec [, transformers]
 ```
 
-- `space`, `flags`, `offset` and `limit` are Integers
-- `space` is Space number, 0 to 2^³² - 1
+- `space`, `flags`, `offset` and `limit` are Integers, 0 to 2³² - 1
+- `space` is Space number
 - `flags` is optinal field, [possible values](https://github.com/mailru/tarantool/blob/master/doc/box-protocol.txt#L231) are stored in `Tarantool.flags` in camelCase, e.g. Tarantool.flags.returnTuple
 - `offset` and `limit` are optional, use them to specify ammount of returned with select
 - `tuples` is an Array of tuples
