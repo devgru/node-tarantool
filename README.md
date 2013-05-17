@@ -1,6 +1,6 @@
 # Tarantool Node.js Connector — high-level driver for [Tarantool](http://tarantool.org).
 
-Connector implements [Tarantool binary protocol](https://github.com/mailru/tarantool/blob/master/doc/box-protocol.txt) and allows you to use nice interface to access Tarantool.
+Connector implements [Tarantool binary protocol](https://github.com/mailru/tarantool/blob/master/doc/box-protocol.txt) and exposes nice interface to access Tarantool.
 
 Connector uses [Transport](https://github.com/devgru/node-tarantool-transport) to compose and parse request and response headers.
 
@@ -12,32 +12,32 @@ npm install tarantool
 
 ## Notes on Tarantool Connector
 
-Connector tries to be useful hiding most of Tarantool protocol related stuff under the hood.
+Connector hides most of protocol-related stuff under the hood, still there are things to know about before using it.
 
-There are no Tables and Rows in Tarantool, there are Spaces and Tuples instead, with numbers instead of names.
+Tarantool manages Space instead of Tables and Tuples instead of Rows. Numbers are used to identify Spaces.
 
-Raw Connector methods deal with Tuples, each is Array of Buffers. You should use Space methods and `spec` object (see below) instead to get nicer interface, which will map field order and types to object fields for you.
-
-Tarantool stores data in fields, field type is either int32, int64 or octet string. **All integers in options or fields are unsigned.**
-
-64-bit integers are implemented in two ways: as `i53` type, which is just a Number that can be stored in V8 natively without lost of significance.
-
-Second way to store 64-bit integer is `i64` type, which accepts and returns `BigNum` objects from [`bignum`](https://github.com/justmoon/node-bignum).
+Connector methods accepts Tuples. Use Mapping or Space objects to get nice interface, which will accept and return Objects.
 
 ## Object-to-Tuple binding specification — `spec`
+
+There are three field types: int32, int64 and octet string. **All integers (options, flags, fields, space ids) are unsigned.**
+
+64-bit integers are implemented in two ways:
+- `int53` type: a native JS Number limited to 53 bit that can be stored natively without lost of significance.
+- `int64` type: accepts and returns `BigNum` objects from [`bignum`](https://github.com/justmoon/node-bignum).
 
 `spec` is an object you build to map Object and Tuples to each other.
 
 Example of valid `spec`:
 ```coffee
-spec = id: 'int32', name: 'string', customTypeVar: {pack: ((value) -> ...), unpack: ((buffer) -> ...}
+spec = id: 'int32', name: 'string', customTypeVar: {pack: ((value) -> ...), unpack: ((buffer) -> ...)}
 ```
 
-Here we specify three field-related things: order, name and type. Order-Name two-way binding allows to map fields, and Name-Type binding allows to transform values to Buffer and back.
+We specify three field-related things: order, name and type. `spec` tells Mapping which place should every field take and how to convert it.
 
-If you want to use custom type use object with `pack: (value) -> buffer` and `unpack: (buffer) -> value` methods instead of a string.
+In order to use custom type, replace string with object having `pack: (value) -> buffer` and `unpack: (buffer) -> value` methods.
 
-*int32, i32, or any string with `32` can be used to specify int32 type, same for 53 and 64*
+*int32, i32, or any string with '32' can be used to specify int32 type, same for 53 and 64*
 
 ## API
 
@@ -49,6 +49,7 @@ If you want to use custom type use object with `pack: (value) -> buffer` and `un
 # create Connection using Transport, any object, with `request(type, body, callback)`
 tc = new Tarantool transport
 # OR use create default Transport
+# default port is 33013
 tc = Tarantool.connect port, host, callback
 
 # now we can use connection
@@ -63,7 +64,7 @@ tc.ping callback
 
 - `space`, `flags`, `offset` and `limit` are Integers
 - `space` is Space number
-- `flags` is optinal field, [possible values](https://github.com/mailru/tarantool/blob/master/doc/box-protocol.txt#L231) are stored in `Tarantool.flags` in camelCase, e.g. Tarantool.flags.returnTuple
+- `flags` is optional field, [possible values](https://github.com/mailru/tarantool/blob/master/doc/box-protocol.txt#L231) are stored in `Tarantool.flags` in camelCase, e.g. Tarantool.flags.returnTuple
 - `offset` and `limit` are optional, use them to specify ammount of returned with select
 - `tuples` is an Array of tuples
 - `tuple` is an Array of Fields, each Field is Buffer
@@ -75,7 +76,7 @@ tc.ping callback
 ### Mapping
 
 Mapping deals withs `spec`, it will map objects you pass to it.
-Use Mapping if you want to access several spaces with similar structure.
+Use Mapping to access several spaces with similar structure.
 
 Mapping API:
 ```coffee
@@ -104,7 +105,7 @@ mapping.splice spliceArgument
 
 ### Space
 
-Space incapsulates Mapping and space number and has shortest API:
+Space incapsulates Mapping and space number to give you shortest API:
 
 ```coffee
 # creating Space with known spec, and, maybe additional transformations
@@ -142,11 +143,12 @@ operations = [
     userSpace.splice name: offset: 0, length: 0, string: '[Winner] '
 ]
 userSpace.update { id: userId }, operations, ->
-    console.log 'winner updated'
+    console.log 'winner now has [Winner] tag before his name'
 ```
 
 ### TODO
 - check if Buffer.concat is fast enough, if it is slow - replace with array of buffers, concat only before transport.request
+- check argument type in operations
 - more tests
 
 ### Bugs and issues
