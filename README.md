@@ -1,4 +1,4 @@
-# Tarantool Node.js Connector — high-level driver for [Tarantool](http://tarantool.org).
+# Tarantool Node.js Connector — high-level [Tarantool](http://tarantool.org) driver.
 
 Connector implements [Tarantool binary protocol](https://github.com/mailru/tarantool/blob/master/doc/box-protocol.txt) and exposes nice interface to access Tarantool.
 
@@ -14,7 +14,7 @@ npm install tarantool
 
 Connector hides most of protocol-related stuff under the hood, still there are things to know about before using it.
 
-Tarantool manages Space instead of Tables and Tuples instead of Rows. Numbers are used to identify Spaces.
+Tarantool manages Spaces instead of Tables and Tuples instead of Rows. Numbers are used to identify Spaces.
 
 Connector methods accepts Tuples. Use Mapping or Space objects to get nice interface, which will accept and return Objects.
 
@@ -26,7 +26,7 @@ There are three field types: int32, int64 and octet string. **All integers (opti
 - `int53` type: a native JS Number limited to 53 bit that can be stored natively without lost of significance.
 - `int64` type: accepts and returns `BigNum` objects from [`bignum`](https://github.com/justmoon/node-bignum).
 
-`spec` is an object you build to map Object and Tuples to each other.
+Build `spec` object to map Object and Tuples to each other. Tarantool knows nothing about field names or types and Connector maps them depending on `spec`.
 
 Example of valid `spec`:
 ```coffee
@@ -35,9 +35,9 @@ spec = id: 'int32', name: 'string', customTypeVar: {pack: ((value) -> ...), unpa
 
 We specify three field-related things: order, name and type. `spec` tells Mapping which place should every field take and how to convert it.
 
-In order to use custom type, replace string with object having `pack: (value) -> buffer` and `unpack: (buffer) -> value` methods.
+In order to use custom type, replace string with object having `pack: (value) -> buffer` and `unpack: (buffer) -> value` methods as in example above.
 
-*int32, i32, or any string with '32' can be used to specify int32 type, same for 53 and 64*
+*Use any string containing '32' to specity int32 type, same for 53 and 64*
 
 ## API
 
@@ -46,13 +46,13 @@ In order to use custom type, replace string with object having `pack: (value) ->
 `tc` stands for Tarantool Connection
 
 ```coffee
-# create Connection using Transport, any object, with `request(type, body, callback)`
-tc = new Tarantool transport
-# OR use create default Transport
+# create Connection using default Transport
 # default port is 33013
 tc = Tarantool.connect port, host, callback
+# OR create Connection using Transport, any object, with `request(type, body, callback)`
+#tc = new Tarantool transport
 
-# now we can use connection
+# make use of connection
 tc.insert space, tuple, [flags,] callback
 tc.select space, tuples, [index, [offset, [limit,]]] callback
 tc.update space, tuple, [operations, [flags,]] callback
@@ -70,25 +70,30 @@ tc.ping callback
 - `tuple` is an Array of Fields, each Field is Buffer
 - `proc` is a String
 - `operations` are constructed via Mapping or Space methods (see below)
-- `callback` is a Function that is called as `callback (returnCode, body)` where `body` is array of `tuples` or an error string if `returnCode` is non-zero.
+- `callback` is a Function that is called as `callback (returnCode, body)` where `body` is an Array of `tuples` or a Number or an error string if `returnCode` is non-zero.
 - `spec` is object, its keys are field names, values are types, and order is order of fields in tuple
 
 ### Mapping
 
-Mapping deals withs `spec`, it will map objects you pass to it.
 Use Mapping to access several spaces with similar structure.
 
 Mapping API:
 ```coffee
+# creating mapping with specified spec
 mapping = tc.mapping spec
 
+# forgetting about tuples
 mapping.insert space, object, [flags,] callback
 mapping.select space, objects, [index, [offset, [limit,]]] callback
 mapping.update space, object, [operations, [flags,]] callback
 mapping.delete space, object, [flags,] callback
 mapping.call proc, object, [flags,] callback
+```
 
-# creating operations list
+`callback` will be called as `callback (returnCode, body)` where `body` is an Array of *Objects* or a Number or an error string if `returnCode` is non-zero.
+
+```coffee
+# creating operations list — see below
 mapping.assign argument
 mapping.add argument
 mapping.and argument
@@ -103,15 +108,17 @@ mapping.splice spliceArgument
 
 `argument` is a Hash (Object) with single key.
 
+
 ### Space
 
 Space incapsulates Mapping and space number to give you shortest API:
 
 ```coffee
-# creating Space with known spec, and, maybe additional transformations
+# creating Space with spec
 space = tc.space space, spec
-# OR
-space = tc.space space, mapping
+# OR with mapping
+# mapping = tc.mapping spec
+# space = tc.space space, mapping
 
 space.insert object, [flags,] callback
 space.select objects, [index, [offset, [limit,]]], callback
@@ -149,6 +156,7 @@ userSpace.update { id: userId }, operations, ->
 ### TODO
 - check if Buffer.concat is fast enough, if it is slow - replace with array of buffers, concat only before transport.request
 - check argument type in operations
+- write about Tarantool keys and multi-object select
 - more tests
 
 ### Bugs and issues
