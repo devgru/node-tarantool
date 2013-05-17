@@ -17,17 +17,6 @@ class Tarantool
         returnTuple: 1
         add        : 2
         replace    : 4
-
-    @updateOperations =
-        assign      : 0
-        add         : 1
-        bitwiseAnd  : 2
-        bitwiseXor  : 3
-        bitwiseOr   : 4
-        splice      : 5
-        delete      : 6
-        insertBefore: 7
-    
     
     @connect: (port, host, callback) ->
         new Tarantool Transport.connect port, host, callback
@@ -35,11 +24,12 @@ class Tarantool
     constructor: (@transport) ->
         @composer = new Composer @transport
     
-    space: (space, spec) ->
-        new Space this, space, spec
+    space: (space, mapping) ->
+        mapping = new Mapping this, mapping unless mapping instanceof Mapping
+        new Space mapping, space
 
-    transform: (object, spec, transformers) ->
-        new Mapping(spec, transformers).packObject object
+    mapping: (spec) ->
+        new Mapping this, spec
 
     parseBody: (callback) -> (body) ->
         returnCode = body.readUInt32LE 0
@@ -93,7 +83,7 @@ class Tarantool
     call: (proc, tuple, flags, callback) ->
         if callback is undefined
             callback = flags
-            flags = 0
+            flags = DEFAULT_FLAGS
 
         @composer.call proc, tuple, flags, @parseBody callback
     

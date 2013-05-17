@@ -1,106 +1,104 @@
-leb = require 'leb'
-compose = require './compose'
+Mapper = require './mapper'
+
+DEFAULT_OFFSET = 0
+DEFAULT_OPERATIONS = []
+DEFAULT_FLAGS = 0
+DEFAULT_INDEX = 0
+DEFAULT_LIMIT = 4294967295
 
 class Mapping
-    # {
-    #   id: 'string',
-    #   name: 'i32'
-    #   fieldName: type
-    # }
-    transformers:
-        string:
-            pack: (value) -> new Buffer value, 'utf-8'
-            unpack: (buffer) -> buffer.toString 'utf-8'
-        buffer:
-            pack: (value) -> value
-            unpack: (buffer) -> buffer
-        object:
-            pack: (value) -> new Buffer JSON.stringify(value), 'utf-8'
-            unpack: (buffer) -> JSON.parse buffer.toString 'utf-8'
-        32:
-            pack: (value) ->
-                field = new Buffer 4
-                field.writeUInt32LE value, 0
-                field
-            unpack: (buffer) -> buffer.readUInt32LE 0
+    @updateOperations =
+        assign      : 0
+        add         : 1
+        bitwiseAnd  : 2
+        bitwiseXor  : 3
+        bitwiseOr   : 4
+        splice      : 5
+        delete      : 6
+        insertBefore: 7
+    
+    constructor: (@connector, spec) ->
+        @mapper = new Mapper spec
+    
+    parseBody: (callback) -> (returnCode, body) =>
+        if body instanceof Array
+            callback returnCode, @mapper.unpackTuples body
+        else
+            callback returnCode, body
+    
+    # # requests # #
 
-    types: {}
-    order: {}
-    names: []
+    insert: (space, object, flags, callback) ->
+        if callback is undefined
+            callback = flags
+            flags = DEFAULT_FLAGS
+        
+        tuple = @mapper.packObject object
+        @connector.insert space, tuple, flags, @parseBody callback
+    
+    select: (space, objects, index, offset, limit, callback) ->
+        if offset is undefined
+            callback = index
+            limit = DEFAULT_LIMIT
+            offset = DEFAULT_OFFSET
+            index = DEFAULT_INDEX
+        else if limit is undefined
+            callback = offset
+            limit = DEFAULT_LIMIT
+            offset = DEFAULT_OFFSET
+        else if callback is undefined
+            callback = limit
+            limit = DEFAULT_LIMIT
+        
+        tuples = @mapper.packObjects objects
+        @connector.select space, tuples, index, offset, limit, @parseBody callback
+    
+    update: (space, object, operations, flags, callback) ->
+        if flags is undefined
+            callback = operations
+            operations = DEFAULT_OPERATIONS
+            flags = DEFAULT_FLAGS
+        else if callback is undefined
+            callback = flags
+            flags = DEFAULT_FLAGS
+        
+        tuple = @mapper.packObject object
+        @connector.update space, tuple, operations, flags, @parseBody callback
+    
+    delete: (space, object, flags, callback) ->
+        if callback is undefined
+            callback = flags
+            flags = DEFAULT_FLAGS
+        
+        tuple = @mapper.packObject object
+        @connector.delete space, tuple, flags, @parseBody callback
+    
+    call: (proc, object, flags, callback) ->
+        if callback is undefined
+            callback = flags
+            flags = 0
+        
+        tuple = @mapper.packObject object
+        @connector.call proc, tuple, flags, @parseBody callback
 
-    constructor: (spec, transformers) ->
-        # filling types object
-        keys = Object.keys spec
-        for key, index in keys
-            fieldName = key
-            @types[fieldName] = spec[fieldName]
-            @names[index] = fieldName
-            @order[fieldName] = index
+    # # update operations # #
 
-        # add custom transformers if any
-        return if not transformers?
-        for key, transformer of transformers
-            @transformers[key] = transformer
-        return
+    assign: (object) ->
+        @mapper.operation object, Mapping.updateOperations.assign
+    add: (object) ->
+        @mapper.operation object, Mapping.updateOperations.add
+    and: (object) ->
+        @mapper.operation object, Mapping.updateOperations.and
+    xor: (object) ->
+        @mapper.operation object, Mapping.updateOperations.xor
+    or: (object) ->
+        @mapper.operation object, Mapping.updateOperations.or
+    delete: (object) ->
+        @mapper.operation object, Mapping.updateOperations.delete
+    insertBefore: (object) ->
+        @mapper.operation object, Mapping.updateOperations.insertBefore
 
-    packObjects: (objects) ->
-        objects.map @packObject.bind @
-
-    packObject: (object) ->
-        tuple = []
-
-        for key, value of object
-            index = @order[key]
-            tuple[index] = @packField value, @types[key]
-        return tuple
-
-    packField: (value, type) ->
-        field = (@getTransformer type).pack value
-
-        return Buffer.concat [leb.encodeUInt32(field.length), field]
-
-    unpackTuples: (tuples) ->
-        tuples.map @unpackTuple.bind @
-
-    unpackTuple: (tuple) ->
-        object = {}
-        for field, index in tuple
-            fieldName = @names[index]
-            type = @types[fieldName]
-
-            object[fieldName] = (@getTransformer type).unpack field
-        return object
-
-    getTransformer: (type) ->
-        if -1 < type.indexOf '32' then type = '32'
-        else if -1 < type.indexOf '64' then type = '64'
-        throw new Error "there is is not transformer for type #{type}" if not @transformers[type]?
-        return @transformers[type]
-
-    operation: (object, operation) ->
-        key = (Object.keys object)[0]
-        value = object[key]
-        type = @types[key]
-
-        field: @order[key]
-        operation: operation
-        argument: @packField value, type
-
-    splice: (object, operation) ->
-        key = (Object.keys object)[0]
-        value = object[key]
-
-        field: @order[key]
-        operation: operation
-        argument: @packSpliceArgument value
-
-    packSpliceArgument: (argument) ->
-        offset = compose.int32Field argument.offset
-        length = compose.int32Field argument.length
-        string = compose.stringField argument.string
-        size = leb.encodeUInt32 offset.length + length.length + string.length
-
-        Buffer.concat [size, offset, length, string]
-
+    splice: (object) ->
+        @mapper.splice object, Mapping.updateOperations.splice
 
 module.exports = Mapping

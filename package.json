@@ -1,15 +1,13 @@
 {
   "name": "tarantool",
-  "version": "0.2.2",
-  "description": "A node.js connector for Tarantool",
-  "files": [
-    "lib"
-  ],
+  "version": "0.2.3",
+  "description": "High-level Tarantool driver for node.js",
+  "files": ["lib"],
   "main": "./lib",
   "scripts": {
-    "build": "coffee --bare --compile --lint --output lib src/*.coffee",
     "prepublish": "coffee --bare --compile --lint --output lib src/*.coffee",
-    "postpublish": "rm -rf lib"
+    "postpublish": "rm -rf lib",
+    "test": "./node_modules/.bin/nodeunit test"
   },
   "repository": {
     "type": "git",
@@ -17,16 +15,17 @@
   },
   "dependencies": {
     "tarantool-transport": "0.2.x",
-    "leb": "*"
+    "leb": "*",
+    "bignum": "*",
+    "int53": "*"
   },
   "devDependencies": {
     "coffee-script": "*",
-    "grunt": "*",
-    "grunt-contrib-nodeunit": "~0.1.2"
+    "nodeunit": "*"
   },
   "keywords": [
     "tarantool"
   ],
-  "author": "Devgru <git@devg.ru>",
+  "author": "Devgru <git@devg.ru> (http://devg.ru)",
   "license": "MIT"
 }

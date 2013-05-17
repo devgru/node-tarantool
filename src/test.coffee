@@ -10,7 +10,12 @@ Buffer.concat = ->
 
 TarantoolTransport = require 'tarantool-transport'
 
+bignum = require 'bignum'
+
 tt = Tarantool.connect 33013, 'localhost', ->
+    spec = test: '64'
+    # tt.transform {test: bignum '18446744073709551615'}, spec
+    
     # maybe the fact of connection marks that tarantool is up, but let's check with ping
     tt.ping ->
         counter = 0

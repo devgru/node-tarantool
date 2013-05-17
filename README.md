@@ -1,4 +1,4 @@
-Beta version of [Tarantool](http://tarantool.org) connector for [node.js](http://nodejs.org).
+# Tarantool Node.js Connector — high-level driver for [Tarantool](http://tarantool.org).
 
 Connector implements [Tarantool binary protocol](https://github.com/mailru/tarantool/blob/master/doc/box-protocol.txt) and allows you to use nice interface to access Tarantool.
 
@@ -20,29 +20,24 @@ Raw Connector methods deal with Tuples, each is Array of Buffers. You should use
 
 Tarantool stores data in fields, field type is either int32, int64 or octet string. **All integers in options or fields are unsigned.**
 
-64-bit integers are not implemented yet, they can not be stored in V8 natively without lost of significance. Maybe I will implement it with bignum by fullmoon or javascript-bignum.
+64-bit integers are implemented in two ways: as `i53` type, which is just a Number that can be stored in V8 natively without lost of significance.
 
-We can use octet string to store Strings, Buffers and Objects (as JSON).
+Second way to store 64-bit integer is `i64` type, which accepts and returns `BigNum` objects from [`bignum`](https://github.com/justmoon/node-bignum).
 
-## Object to Tuple binding specification — `spec`
+## Object-to-Tuple binding specification — `spec`
 
-There are following field types you can use as `spec` values:
-- int32 - unsigned 32-bit integer
-- string - utf-8 encoded string
-- buffer - passed as is
-- object - mapped to string via `JSON.stringify`/`JSON.parse`
-- int64 - **not implemented yet**
+`spec` is an object you build to map Object and Tuples to each other.
 
 Example of valid `spec`:
 ```coffee
-spec = id: 'int32', name: 'string'
+spec = id: 'int32', name: 'string', customTypeVar: {pack: ((value) -> ...), unpack: ((buffer) -> ...}
 ```
 
 Here we specify three field-related things: order, name and type. Order-Name two-way binding allows to map fields, and Name-Type binding allows to transform values to Buffer and back.
 
-If you want to use any other type or override default you should implement your own Transformer (see below).
+If you want to use custom type use object with `pack: (value) -> buffer` and `unpack: (buffer) -> value` methods instead of a string.
 
-*int32, i32, or just 32 can be used to specify int32 type, same for 64*
+*int32, i32, or any string with `32` can be used to specify int32 type, same for 53 and 64*
 
 ## API
 
@@ -64,8 +59,6 @@ tc.delete space, tuple, [flags,] callback
 tc.call proc, tuple, [flags,] callback
 tc.ping callback
 
-# please, don't generate tuples yourself, use transform:
-tuple = tc.transform object, spec [, transformers]
 ```
 
 - `space`, `flags`, `offset` and `limit` are Integers
@@ -75,19 +68,46 @@ tuple = tc.transform object, spec [, transformers]
 - `tuples` is an Array of tuples
 - `tuple` is an Array of Fields, each Field is Buffer
 - `proc` is a String
-- `operations` are constructed via space methods (see below)
+- `operations` are constructed via Mapping or Space methods (see below)
 - `callback` is a Function that is called as `callback (returnCode, body)` where `body` is array of `tuples` or an error string if `returnCode` is non-zero.
-- `transformers` is Hash (Object), each element is Transformer, name is type name
-- `transformer` is an Object with `pack` and `unpack` methods.
 - `spec` is object, its keys are field names, values are types, and order is order of fields in tuple
 
-It's recommended to use Space, it will transform objects for you.
+### Mapping
+
+Mapping deals withs `spec`, it will map objects you pass to it.
+Use Mapping if you want to access several spaces with similar structure.
+
+Mapping API:
+```coffee
+mapping = tc.mapping spec
+
+# now we can use connection
+mapping.insert space, object, [flags,] callback
+mapping.select space, objects, [index, [offset, [limit,]]] callback
+mapping.update space, object, [operations, [flags,]] callback
+mapping.delete space, object, [flags,] callback
+mapping.call proc, object, [flags,] callback
+
+# if we need to create operations list:
+mapping.assign argument
+mapping.add argument
+mapping.and argument
+mapping.xor argument
+mapping.or argument
+mapping.delete argument
+mapping.insertBefore argument
+mapping.splice spliceArgument
+```
 
 ### Space
 
+Space incapsulates Mapping and space number and has shortest API:
+
 ```coffee
 # creating Space with known spec, and, maybe additional transformations
-space = tc.space space, spec[, transformers]
+space = tc.space space, spec
+# OR
+space = tc.space space, mapping
 
 space.insert object, [flags,] callback
 space.select objects, [index, [offset, [limit,]]], callback
@@ -123,7 +143,6 @@ userSpace.update { id: userId }, operations, ->
 ### TODO
 - check if Buffer.concat is fast enough, if it is slow - replace with array of buffers, concat only before transport.request
 - more tests
-- research int64 transformer implementation
 
 ### Bugs and issues
 Bug reports are welcome :)
