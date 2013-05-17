@@ -98,6 +98,10 @@ mapping.insertBefore argument
 mapping.splice spliceArgument
 ```
 
+`spliceArgument` is a Hash (Object) with three keys: `string` (String), `offset` (Number) and `length` (Number).
+
+`argument` is a Hash (Object) with single key.
+
 ### Space
 
 Space incapsulates Mapping and space number and has shortest API:
@@ -122,17 +126,13 @@ space.or argument
 space.delete argument
 space.insertBefore argument
 space.splice spliceArgument
+```
 
 ### Operations
 
 Tarantool's update deals with "operations" — atomic field actions.
+
 Here's an example:
-
-```
-
-`spliceArgument` is a Hash (Object) with three keys: `string` (String), `offset` (Number) and `length` (Number)
-
-`argument` is a Hash (Object) with single key, e.g.:
 
 ```coffee
 spec = id: 'i32', name: 'string', winner: 'i32'
