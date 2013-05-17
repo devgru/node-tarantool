@@ -81,14 +81,13 @@ Mapping API:
 ```coffee
 mapping = tc.mapping spec
 
-# now we can use connection
 mapping.insert space, object, [flags,] callback
 mapping.select space, objects, [index, [offset, [limit,]]] callback
 mapping.update space, object, [operations, [flags,]] callback
 mapping.delete space, object, [flags,] callback
 mapping.call proc, object, [flags,] callback
 
-# if we need to create operations list:
+# creating operations list
 mapping.assign argument
 mapping.add argument
 mapping.and argument
@@ -114,7 +113,7 @@ space.select objects, [index, [offset, [limit,]]], callback
 space.update object, [operations, [flags,]] callback
 space.delete object, [flags,] callback
 
-# if we need to create operations list:
+# creating operations list
 space.assign argument
 space.add argument
 space.and argument
@@ -123,6 +122,12 @@ space.or argument
 space.delete argument
 space.insertBefore argument
 space.splice spliceArgument
+
+### Operations
+
+Tarantool's update deals with "operations" — atomic field actions.
+Here's an example:
+
 ```
 
 `spliceArgument` is a Hash (Object) with three keys: `string` (String), `offset` (Number) and `length` (Number)
