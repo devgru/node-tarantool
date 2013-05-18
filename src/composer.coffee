@@ -3,19 +3,18 @@ transport = require 'tarantool-transport'
 compose = require './compose'
 
 REQUEST_TYPE =
-    insert: 13
-    select: 17
-    update: 19
-    delete: 21
-    call  : 22
-    ping  : 65280
+    insert: 0x0D
+    select: 0x11
+    update: 0x13
+    delete: 0x15
+    call  : 0x16
+    ping  : 0xFF00
     
 class Composer
     constructor: (@transport) ->
     
     insert: (space, tuple, flags, callback) ->
         options = compose.int32s space, flags
-        
         request = Buffer.concat [options, compose.tuple tuple]
 
         @request REQUEST_TYPE.insert, request, callback
