@@ -152,14 +152,14 @@ userSpace.update { id: userId }, operations, ->
     console.log 'winner now has [Winner] tag before his name'
 ```
 
-### TODO
+## TODO
 - check if Buffer.concat is fast enough, if it is slow - replace with array of buffers, concat only before transport.request
 - check argument type in operations
 - write about Tarantool keys and multi-object select
 - more tests
 
-### Bugs and issues
-Bug reports are welcome :)
+## Bugs and issues
+Bug reports and pull requests are welcome.
 
 ### LICENSE
 Tarantool Connector for node.js is published under MIT license.
