@@ -21,7 +21,7 @@ class Mapping
         @mapper = new Mapper spec
     
     parseBody: (callback) -> (returnCode, body) =>
-        if body instanceof Array
+        if Array.isArray body
             callback returnCode, @mapper.unpackTuples body
         else
             callback returnCode, body
