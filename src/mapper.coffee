@@ -1,5 +1,4 @@
 compose = require './compose'
-leb = require 'leb' # field length
 
 class Mapper
     transformers: do require './default-transformers'
@@ -7,15 +6,6 @@ class Mapper
     order: {}
     names: []
 
-    # spec = {
-    #   id: 'string',
-    #   name: 'i32',
-    #   somevar:
-    #       pack: -> 
-    #       unpack: ->
-    #   ...
-    #   fieldName: type
-    # }    
     constructor: (spec) ->
         # filling types object
         keys = Object.keys spec
@@ -38,7 +28,7 @@ class Mapper
     
     packObjects: (objects) ->
         @packObject object for object in objects
-
+    
     packObject: (object) ->
         tuple = []
 
@@ -46,21 +36,19 @@ class Mapper
             index = @order[key]
             tuple[index] = @packField value, @types[key]
         return tuple
-
+    
     packField: (value, type) ->
-        field = type.pack value
-
-        return Buffer.concat [leb.encodeUInt32(field.length), field]
-
+        type.pack value
+    
     unpackTuples: (tuples) ->
         @unpackTuple tuple for tuple in tuples
-
+    
     unpackTuple: (tuple) ->
         object = {}
         for field, index in tuple
             fieldName = @names[index]
             type = @types[fieldName]
-
+            
             object[fieldName] = type.unpack field
         return object
     
@@ -68,7 +56,7 @@ class Mapper
         key = (Object.keys object)[0]
         value = object[key]
         type = @types[key]
-
+        
         field: @order[key]
         operation: operation
         argument: @packField value, type
@@ -76,17 +64,16 @@ class Mapper
     splice: (object, operation) ->
         key = (Object.keys object)[0]
         value = object[key]
-
+        
         field: @order[key]
         operation: operation
         argument: @packSpliceArgument value
-
+    
     packSpliceArgument: (argument) ->
         offset = compose.int32Field argument.offset
         length = compose.int32Field argument.length
         string = compose.stringField argument.string
-        size = leb.encodeUInt32 offset.length + length.length + string.length
-
-        Buffer.concat [size, offset, length, string]
+        
+        Buffer.concat [offset, length, string]
 
 module.exports = Mapper
