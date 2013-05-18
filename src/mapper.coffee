@@ -37,7 +37,7 @@ class Mapper
         return
     
     packObjects: (objects) ->
-        objects.map @packObject.bind @
+        @packObject object for object in objects
 
     packObject: (object) ->
         tuple = []
@@ -53,7 +53,7 @@ class Mapper
         return Buffer.concat [leb.encodeUInt32(field.length), field]
 
     unpackTuples: (tuples) ->
-        tuples.map @unpackTuple.bind @
+        @unpackTuple tuple for tuple in tuples
 
     unpackTuple: (tuple) ->
         object = {}
