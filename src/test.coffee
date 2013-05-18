@@ -5,7 +5,7 @@ Tarantool = require './'
 concat = Buffer.concat
 counter = 0
 Buffer.concat = ->
-    console.log 'concat', counter++
+    console.log (new Error().stack.split('\n').slice 2, 4), arguments
     concat.apply Buffer, arguments
 
 TarantoolTransport = require 'tarantool-transport'
