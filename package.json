@@ -1,6 +1,6 @@
 {
   "name": "tarantool",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "High-level Tarantool driver for node.js",
   "files": ["lib"],
   "main": "./lib",

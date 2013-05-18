@@ -50,7 +50,7 @@ In order to use custom type, replace string with object having `pack: (value) ->
 # default port is 33013
 tc = Tarantool.connect port, host, callback
 # OR create Connection using Transport, any object, with `request(type, body, callback)`
-#tc = new Tarantool transport
+# tc = new Tarantool transport
 
 # make use of connection
 tc.insert space, tuple, [flags,] callback
@@ -69,9 +69,8 @@ tc.ping callback
 - `tuples` is an Array of tuples
 - `tuple` is an Array of Fields, each Field is Buffer
 - `proc` is a String
-- `operations` are constructed via Mapping or Space methods (see below)
+- `operations` is an Array of `operation`, they are constructed via Mapping or Space methods (see below)
 - `callback` is a Function that is called as `callback (returnCode, body)` where `body` is an Array of `tuples` or a Number or an error string if `returnCode` is non-zero.
-- `spec` is object, its keys are field names, values are types, and order is order of fields in tuple
 
 ### Mapping
 
