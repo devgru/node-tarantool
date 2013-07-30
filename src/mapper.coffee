@@ -1,6 +1,10 @@
 compose = require './compose'
 
 class Mapper
+    ###
+    Mapper is an utility used by Mapping, it parses specs and packs/unpacks objects, tuples, fields and operations
+    ###
+    
     transformers: do require './default-transformers'
     types: {}
     order: {}

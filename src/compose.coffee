@@ -1,6 +1,10 @@
 leb = require './leb'
 
 module.exports = compose =
+    ###
+    Compose is a low-level utility, packing low-level structures: int32, varint (aka leb128, for Tarantool — beb128).
+    ###
+    
     int32s: ->
         buffer = new Buffer arguments.length * 4
         for value, key in arguments

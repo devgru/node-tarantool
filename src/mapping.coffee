@@ -6,7 +6,12 @@ DEFAULT_FLAGS = 0
 DEFAULT_INDEX = 0
 DEFAULT_LIMIT = 4294967295
 
+
 class Mapping
+    ###
+    Mapping class is API level which cares about mapping fields to their names and positions
+    ###
+    
     @updateOperations =
         assign      : 0
         add         : 1

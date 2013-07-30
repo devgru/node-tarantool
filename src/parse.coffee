@@ -1,6 +1,10 @@
 leb = require './leb'
 
 module.exports = parse =
+    ###
+    Parse is a low-level utility parsing response and tuples.
+    ###
+    
     response: (body) ->
         count = body.readUInt32LE 4
         # maybe there is only count
