@@ -1,4 +1,4 @@
-# Tarantool Node.js Connector — high-level [Tarantool](http://tarantool.org) driver.
+# Connector - high-level [Tarantool](http://tarantool.org) driver
 
 Connector implements [Tarantool binary protocol](https://github.com/mailru/tarantool/blob/master/doc/box-protocol.txt) and exposes nice interface to access Tarantool.
 

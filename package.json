@@ -1,11 +1,11 @@
 {
   "name": "tarantool",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "High-level Tarantool driver for node.js",
   "files": ["lib"],
   "main": "./lib",
   "scripts": {
-    "prepublish": "coffee --bare --compile --lint --output lib src/*.coffee",
+    "prepublish": "coffee --bare --compile --output lib src/*.coffee",
     "postpublish": "rm -rf lib",
     "test": "./node_modules/.bin/nodeunit test"
   },
