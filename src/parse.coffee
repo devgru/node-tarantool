@@ -1,4 +1,4 @@
-leb = require 'leb'
+leb = require './leb'
 
 module.exports = parse =
     response: (body) ->

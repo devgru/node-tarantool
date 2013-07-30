@@ -1,17 +1,23 @@
-encodeLeb = (value) ->
-    bytes = []
+# this file fixes LEB128 behaviour to be compatible with Tarantool
 
-    if value >= (1 << 7)
-        if value >= (1 << 14)
-            if value >= (1 << 21)
-                if value >= (1 << 28)
-                    bytes.push (value >> 28) | 0x80
-                bytes.push (value >> 21) | 0x80
-            bytes.push (value >> 14) | 0x80
-        bytes.push (value >> 7) | 0x80
-    bytes.push (value) & 0x7F
+leb = require 'leb'
 
-    new Buffer bytes
+fix = (fn) ->
+    (data) ->
+        result = fn data
+        len = result.length
+
+        # we have to reverse result
+        reversed = new Buffer len
+        for i in [0...len]
+            reversed[i] = result[len - 1 - i]
+
+        # and toggle #7 bit in first and last bytes
+        reversed[0] ^= 0x80
+        reversed[len - 1] ^= 0x80
+
+        reversed
 
 module.exports =
-    encodeUInt32: encodeLeb
+    encodeUInt32: fix leb.encodeUInt32
+    decodeUInt32: fix leb.decodeUInt32
