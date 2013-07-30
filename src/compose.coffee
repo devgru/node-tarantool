@@ -1,4 +1,4 @@
-leb = require './leb'
+beb = require './beb'
 
 module.exports = compose =
     ###
@@ -21,14 +21,14 @@ module.exports = compose =
     stringField: (value) ->
         # what about string encoding?
         stringBuffer = new Buffer value, 'utf-8' # default
-        lengthBuffer = leb.encodeUInt32 stringBuffer.length
+        lengthBuffer = beb.encode stringBuffer.length
         
         Buffer.concat [lengthBuffer, stringBuffer]
     
     tuple: (tuple) ->
         buffers = [compose.int32s tuple.length]
         for field in tuple
-            buffers.push leb.encodeUInt32 field.length
+            buffers.push beb.encode field.length
             buffers.push field
         
         Buffer.concat buffers
