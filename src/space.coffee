@@ -13,18 +13,23 @@ class Space
         @mapping.update @space, object, operations, flags, callback
     
     delete: (object, flags, callback) ->
+        # handle delete operation
+        return deleteOperation object unless flags or callback
+        
         @mapping.delete @space, object, flags, callback
-
+    
     # # update operations # #
-
+    
     assign: (object) -> @mapping.assing object
     add: (object) -> @mapping.add object
     and: (object) -> @mapping.and object
     xor: (object) -> @mapping.xor object
     or: (object) ->  @mapping.or object
-    delete: (object) -> @mapping.delete object
     insertBefore: (object) -> @mapping.insertBefore object
-
+    
+    # delete operation clashes with delete request
+    deleteOperation: (object) -> @mapping.delete object
+    
     splice: (object) -> @mapping.splice object
 
 module.exports = Space

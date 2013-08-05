@@ -71,6 +71,9 @@ class Mapping
         @connector.update space, tuple, operations, flags, @parseBody callback
     
     delete: (space, object, flags, callback) ->
+        # handle delete operation
+        return @deleteOperation space unless object or flags or callback
+        
         if callback is undefined
             callback = flags
             flags = DEFAULT_FLAGS
@@ -85,9 +88,9 @@ class Mapping
         
         tuple = @mapper.packObject object
         @connector.call proc, tuple, flags, @parseBody callback
-
+    
     # # update operations # #
-
+    
     assign: (object) ->
         @mapper.operation object, Mapping.updateOperations.assign
     add: (object) ->
@@ -98,11 +101,13 @@ class Mapping
         @mapper.operation object, Mapping.updateOperations.xor
     or: (object) ->
         @mapper.operation object, Mapping.updateOperations.or
-    delete: (object) ->
-        @mapper.operation object, Mapping.updateOperations.delete
     insertBefore: (object) ->
         @mapper.operation object, Mapping.updateOperations.insertBefore
-
+    
+    # clashes with delete request
+    deleteOperation: (object) ->
+        @mapper.operation object, Mapping.updateOperations.delete
+    
     splice: (object) ->
         @mapper.splice object, Mapping.updateOperations.splice
 
