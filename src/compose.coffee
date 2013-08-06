@@ -36,6 +36,6 @@ module.exports = compose =
     operation: (operation) ->
         field = compose.int32s operation.field
         operationBuffer = new Buffer [operation.operation]
-        length = leb.encodeUInt32 operation.argument.length
+        length = beb.encode operation.argument.length
         
         Buffer.concat [field, operationBuffer, length, operation.argument]

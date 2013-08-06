@@ -20,7 +20,7 @@ class Space
     
     # # update operations # #
     
-    assign: (object) -> @mapping.assing object
+    assign: (object) -> @mapping.assign object
     add: (object) -> @mapping.add object
     and: (object) -> @mapping.and object
     xor: (object) -> @mapping.xor object
