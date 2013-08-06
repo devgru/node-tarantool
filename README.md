@@ -155,7 +155,6 @@ userSpace.update { id: userId }, operations, ->
 ## TODO
 - check if Buffer.concat is fast enough, if it is slow - replace with array of buffers, concat only before transport.request
 - check argument type in operations
-- implement LEB128 from scratch
 - write about Tarantool keys and multi-object select
 - write tests
 

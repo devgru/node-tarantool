@@ -1,6 +1,6 @@
 {
   "name": "tarantool",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "High-level Tarantool driver for node.js",
   "files": ["lib"],
   "main": "./lib",
@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "tarantool-transport": "0.2.x",
-    "leb": "*",
     "bignum": "*",
     "int53": "*"
   },
