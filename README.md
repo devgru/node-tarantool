@@ -12,30 +12,40 @@ npm install tarantool
 
 ## Notes on Tarantool Connector
 
-Connector hides most of protocol-related stuff under the hood, still there are things to know about before using it.
+Connector hides protocol-related stuff under the hood but there are things to know about before using it.
 
-Tarantool manages Spaces instead of Tables and Tuples instead of Rows. Numbers are used to identify Spaces.
+Tarantool database consists of Spaces (tables) and Tuples (rows). Spaces have no name, only numeric id.
 
-Connector methods accepts Tuples. Use Mapping or Space objects to get nice interface, which will accept and return Objects.
+This module provides three interfaces — Connection, Mapping and Space.
+
+Connection contains methods to send all kinds of requests, but arguments (and results) are binary Tuples — not usable.
+
+Mapping knows how to convert Object to Tuple and vice versa (thanks to `spec`) and Space is a Mapping with specified space id.
+
+Call `ping` on Connector, `call` on Mapping and `insert`, `select`, `update`, `delete` on Space.
 
 ## Object-to-Tuple binding specification — `spec`
 
-There are three field types: int32, int64 and octet string. **All integers (options, flags, fields, space ids) are unsigned.**
+There are three inner types in Tarantool storage: `int32`, `int64` and `buffer` (octet string). **All integers (options, flags, fields, space ids) are unsigned.**
 
-64-bit integers are implemented in two ways:
-- `int53` type: a native JS Number limited to 53 bit that can be stored natively without lost of significance.
-- `int64` type: accepts and returns `BigNum` objects from [`bignum`](https://github.com/justmoon/node-bignum).
+Connector can encode some pseudo-types:
+- `int32`: Unsigned 32-bit integer.
+- `int53`: Stored as internal `int64`. A native unsigned JS Number limited to 53 bit, stored natively without lost of significance.
+- `int64`: Accepts and returns `BigNum` objects from [`bignum`](https://github.com/justmoon/node-bignum).
+- `buffer`: Raw binary buffer.
+- `string`: Stored as `buffer` UTF-8 string.
+- `object`: Stored as `buffer` UTF-8 string with JSON content.
 
-Build `spec` object to map Object and Tuples to each other. Tarantool knows nothing about field names or types and Connector maps them depending on `spec`.
+In order to use custom type, instead of providing it's name, pass object having `pack: (value) -> buffer` and `unpack: (buffer) -> value` methods as in example below.
+
+Build `spec` object to map Object and Tuples to each other. Tarantool knows nothing about field names or types and Mapping maps them depending on `spec`.
 
 Example of valid `spec`:
 ```coffee
-spec = id: 'int32', name: 'string', customTypeVar: {pack: ((value) -> ...), unpack: ((buffer) -> ...)}
+spec = id: 'int32', name: 'string', flags: 'object', smth_hard: {pack: ((value) -> ...), unpack: ((buffer) -> ...)}
 ```
 
 We specify three field-related things: order, name and type. `spec` tells Mapping which place should every field take and how to convert it.
-
-In order to use custom type, replace string with object having `pack: (value) -> buffer` and `unpack: (buffer) -> value` methods as in example above.
 
 *Use any string containing '32' to specity int32 type, same for 53 and 64*
 
@@ -155,6 +165,7 @@ userSpace.update { id: userId }, operations, ->
 ## TODO
 - check if Buffer.concat is fast enough, if it is slow - replace with array of buffers, concat only before transport.request
 - check argument type in operations
+- catch socket errors and reconnect
 - write about Tarantool keys and multi-object select
 - write tests
 
