@@ -21,8 +21,8 @@ class Tarantool
     @connect: (port, host, callback) ->
         new Tarantool Transport.connect port, host, callback
     
-    constructor: (@transport) ->
-        @composer = new Composer @transport
+    constructor: (transport) ->
+        @composer = new Composer transport
     
     space: (space, mapping) ->
         mapping = new Mapping this, mapping unless mapping instanceof Mapping
