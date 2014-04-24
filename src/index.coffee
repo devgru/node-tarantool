@@ -1,8 +1,8 @@
 Transport = require 'tarantool-transport'
-Composer = require './composer'
 Space = require './space'
 Mapping = require './mapping'
 
+compose = require './compose'
 parse = require './parse'
 
 DEFAULT_OFFSET = 0
@@ -11,6 +11,14 @@ DEFAULT_FLAGS = 0
 DEFAULT_INDEX = 0
 DEFAULT_LIMIT = 4294967295
 
+REQUEST_TYPE =
+    insert: 0x0D
+    select: 0x11
+    update: 0x13
+    delete: 0x15
+    call  : 0x16
+    ping  : 0xFF00
+
 class Tarantool
     @flags =
         none       : 0
@@ -18,11 +26,10 @@ class Tarantool
         add        : 2
         replace    : 4
     
-    @connect: (port, host, callback) ->
+    @connect = (port, host, callback) ->
         new Tarantool Transport.connect port, host, callback
     
-    constructor: (transport) ->
-        @composer = new Composer transport
+    constructor: (@transport) ->
     
     space: (space, mapping) ->
         mapping = new Mapping this, mapping unless mapping instanceof Mapping
@@ -38,13 +45,20 @@ class Tarantool
         else
             callback returnCode, parse.response body
         return
+
+    request: (type, body, callback) ->
+        @transport.request type, body, callback
+
     
     insert: (space, tuple, flags, callback) ->
         if callback is undefined
             callback = flags
             flags = DEFAULT_FLAGS
 
-        @composer.insert space, tuple, flags, @parseBody callback
+        options = compose.int32s space, flags
+
+        request = Buffer.concat [options, compose.tuple tuple]
+        @request REQUEST_TYPE.insert, request, @parseBody callback
     
     select: (space, tuples, index, offset, limit, callback) ->
         if offset is undefined
@@ -59,8 +73,13 @@ class Tarantool
         else if callback is undefined
             callback = limit
             limit = DEFAULT_LIMIT
+        
+        options = compose.int32s space, index, offset, limit, tuples.length
+        buffers = tuples.map compose.tuple
+        buffers.unshift options
 
-        @composer.select space, tuples, index, offset, limit, @parseBody callback
+        request = Buffer.concat buffers
+        @request REQUEST_TYPE.select, request, @parseBody callback
     
     update: (space, tuple, operations, flags, callback) ->
         if flags is undefined
@@ -71,23 +90,40 @@ class Tarantool
             callback = flags
             flags = DEFAULT_FLAGS
 
-        @composer.update space, tuple, operations, flags, @parseBody callback
+        options = compose.int32s space, flags
+        tuple = compose.tuple tuple
+        count = compose.int32s operations.length
+        operations = operations.map compose.operation
+        operations.unshift count
+        operations.unshift tuple
+        operations.unshift options
+
+        request = Buffer.concat operations
+        @request REQUEST_TYPE.update, request, @parseBody callback
     
     delete: (space, tuple, flags, callback) ->
         if callback is undefined
             callback = flags
             flags = DEFAULT_FLAGS
 
-        @composer.delete space, tuple, flags, @parseBody callback
+        options = compose.int32s space, flags
+
+        request = Buffer.concat [options, compose.tuple tuple]
+        @request REQUEST_TYPE.delete, request, @parseBody callback
     
     call: (proc, tuple, flags, callback) ->
         if callback is undefined
             callback = flags
             flags = DEFAULT_FLAGS
 
-        @composer.call proc, tuple, flags, @parseBody callback
+        flags = compose.int32s flags
+        proc = compose.stringField proc
+        tuple = compose.tuple args
+
+        request = Buffer.concat [flags, proc, tuple]
+        @request REQUEST_TYPE.call, request, @parseBody callback
     
     ping: (callback) ->
-        @composer.ping callback
+        @request REQUEST_TYPE.ping, '', callback
     
 module.exports = Tarantool

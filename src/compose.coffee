@@ -1,8 +1,8 @@
-beb = require './beb'
+ber = require './ber'
 
 module.exports = compose =
     ###
-    Compose is a low-level utility, packing low-level structures: int32, varint (aka leb128, for Tarantool — beb128).
+    Compose is a low-level utility, packing low-level structures: int32, varint (BER-128 used in Perl).
     ###
     
     int32s: ->
@@ -21,14 +21,14 @@ module.exports = compose =
     stringField: (value) ->
         # what about string encoding?
         stringBuffer = new Buffer value, 'utf-8' # default
-        lengthBuffer = beb.encode stringBuffer.length
+        lengthBuffer = ber.encode stringBuffer.length
         
         Buffer.concat [lengthBuffer, stringBuffer]
     
     tuple: (tuple) ->
         buffers = [compose.int32s tuple.length]
         for field in tuple
-            buffers.push beb.encode field.length
+            buffers.push ber.encode field.length
             buffers.push field
         
         Buffer.concat buffers
@@ -36,6 +36,6 @@ module.exports = compose =
     operation: (operation) ->
         field = compose.int32s operation.field
         operationBuffer = new Buffer [operation.operation]
-        length = beb.encode operation.argument.length
+        length = ber.encode operation.argument.length
         
         Buffer.concat [field, operationBuffer, length, operation.argument]

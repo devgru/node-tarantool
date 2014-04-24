@@ -14,7 +14,7 @@
     "url": "https://github.com/devgru/node-tarantool.git"
   },
   "dependencies": {
-    "tarantool-transport": "0.2.x",
+    "tarantool-transport": "~0.2.6",
     "bignum": "*",
     "int53": "*"
   },

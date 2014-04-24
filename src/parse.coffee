@@ -1,4 +1,4 @@
-beb = require './beb'
+ber = require './ber'
 
 module.exports = parse =
     ###
@@ -29,9 +29,9 @@ module.exports = parse =
         fields = []
         
         while count > 0
-            sizeLeb = beb.decode tuple, bytesRead
-            bytesRead = sizeLeb.nextIndex
-            size = sizeLeb.value
+            sizeBer = ber.decode tuple, bytesRead
+            bytesRead = sizeBer.nextIndex
+            size = sizeBer.value
             fields.push tuple.slice bytesRead, bytesRead += size
             count--
         
