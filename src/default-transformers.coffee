@@ -1,7 +1,7 @@
 bignum = require 'bignum' # i64
 int53 = require 'int53' # i53
 
-module.exports = ->
+module.exports =
     string:
         pack: (value) -> new Buffer value, 'utf-8'
         unpack: (buffer) -> buffer.toString 'utf-8'
@@ -26,4 +26,3 @@ module.exports = ->
     64:
         pack: (value) -> value.toBuffer size: 8, endian: 'little'
         unpack: (buffer) -> bignum.fromBuffer size: 8, endian: 'little'
-
