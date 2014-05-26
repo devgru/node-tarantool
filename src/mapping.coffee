@@ -81,12 +81,12 @@ class Mapping
         tuple = @mapper.packObject object
         @connector.delete space, tuple, flags, @parseBody callback
     
-    call: (proc, object, flags, callback) ->
+    call: (proc, args, flags, callback) ->
         if callback is undefined
             callback = flags
             flags = 0
         
-        tuple = @mapper.packObject object
+        tuple = @mapper.packProcArgs args
         @connector.call proc, tuple, flags, @parseBody callback
     
     # # update operations # #

@@ -45,6 +45,13 @@ class Mapper
             tuple[index] = @packField value, @types[key]
         return tuple
 
+    packProcArgs: (args) ->
+        tuple = []
+        for key,value of args
+            tuple.push @packField value, @transformers['string']
+
+        return tuple
+
     packField: (value, type) ->
         type.pack value
 
